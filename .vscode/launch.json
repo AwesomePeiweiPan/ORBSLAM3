@@ -1,0 +1,32 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "mono inertial euroc",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/home/peiweipan/Projects/orbslam3Comments/Examples/Monocular-Inertial/mono_inertial_euroc",
+            "args": [
+                "/home/peiweipan/Projects/orbslam3Comments/Vocabulary/ORBvoc.txt",
+                "/home/peiweipan/Projects/orbslam3Comments/Examples/Monocular-Inertial/EuRoC.yaml",
+                "/home/peiweipan/Data/EuRoC/v103",
+                "/home/peiweipan/Projects/orbslam3Comments/Examples/Monocular-Inertial/EuRoC_TimeStamps/V103.txt",
+                "dataset-V103_monoi",
+            ],
+            "stopAtEntry": false,
+            //"preLaunchTask": "debug build",//这一步的build与tasks.json中的type名字相同
+            "cwd": "/home/peiweipan/Projects/orbslam3Comments/Examples/Monocular-Inertial",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true                    
+                }
+            ],
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+    ]
+}

@@ -29,6 +29,10 @@
 #include<System.h>
 #include "ImuTypes.h"
 
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 using namespace std;
 
 void LoadImages(const string &strImagePath, const string &strPathTimes,
@@ -40,7 +44,7 @@ double ttrack_tot = 0;
 int main(int argc, char *argv[])
 {
 
-    if(argc < 5)
+    if(argc < 5)             
     {
         cerr << endl << "Usage: ./mono_inertial_euroc path_to_vocabulary path_to_settings path_to_sequence_folder_1 path_to_times_file_1 (path_to_image_folder_2 path_to_times_file_2 ... path_to_image_folder_N path_to_times_file_N) " << endl;
         return 1;
@@ -184,21 +188,15 @@ int main(int argc, char *argv[])
                 }
             }
 
-    #ifdef COMPILEDWITHC11
-            std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
-    #else
-            std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
-    #endif
 
+            std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
             // Pass the image to the SLAM system
             // cout << "tframe = " << tframe << endl;
             SLAM.TrackMonocular(im,tframe,vImuMeas); // TODO change to monocular_inertial
 
-    #ifdef COMPILEDWITHC11
             std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
-    #else
-            std::chrono::monotonic_clock::time_point t2 = std::chrono::monotonic_clock::now();
-    #endif
+   
+
 
 #ifdef REGISTER_TIMES
             t_track = t_resize + std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t2 - t1).count();
