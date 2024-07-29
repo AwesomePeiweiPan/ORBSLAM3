@@ -56,9 +56,10 @@ public:
         VERBOSITY_DEBUG=4
     };
 
-    static eLevel th;
+    static eLevel th;   //静态变量，实际存储现在的日志级别
 
 public:
+    // str为要输出的日志信息
     static void PrintMess(std::string str, eLevel lev)
     {
         if(lev <= th)

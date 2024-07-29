@@ -289,6 +289,7 @@ bool KannalaBrandt8::ReconstructWithTwoViews(
     cv::Mat D = (cv::Mat_<float>(4, 1) << mvParameters[4], mvParameters[5], mvParameters[6], mvParameters[7]);
     cv::Mat R = cv::Mat::eye(3, 3, CV_32F);
     cv::Mat K = this->toK();
+    // 这里偷懒用了去畸变函数
     cv::fisheye::undistortPoints(vPts1, vPts1, K, D, R, K);
     cv::fisheye::undistortPoints(vPts2, vPts2, K, D, R, K);
 
@@ -297,6 +298,7 @@ bool KannalaBrandt8::ReconstructWithTwoViews(
     for (size_t i = 0; i < vKeys2.size(); i++)
         vKeysUn2[i].pt = vPts2[i];
 
+    // 略有不同，在重建之前，这些点需要去畸变，与真空模型不同
     return tvr->Reconstruct(vKeysUn1, vKeysUn2, vMatches12, T21, vP3D, vbTriangulated);
 }
 
@@ -319,6 +321,8 @@ Eigen::Matrix3f KannalaBrandt8::toK_()
     return K;
 }
 
+// 通过三角化，代替 极线约束
+// 极线约束目的：三角化的时候验证匹配关系
 bool KannalaBrandt8::epipolarConstrain(GeometricCamera *pCamera2, const cv::KeyPoint &kp1, const cv::KeyPoint &kp2,
                                         const Eigen::Matrix3f &R12, const Eigen::Vector3f &t12, const float sigmaLevel, const float unc)
 {
@@ -453,12 +457,14 @@ float KannalaBrandt8::TriangulateMatches(
 
     const float cosParallaxRays = r1.dot(r21) / (r1.norm() * r21.norm());
 
+    // 角度趋近于0，cos趋近于1，则说明平行了，就不三角化了
     if (cosParallaxRays > 0.9998)
     {
         return -1;
     }
 
     // Parallax is good, so we try to triangulate
+    // 记录归一化平面坐标
     cv::Point2f p11, p22;
 
     p11.x = r1[0];
@@ -470,6 +476,7 @@ float KannalaBrandt8::TriangulateMatches(
     Eigen::Vector3f x3D;
     Eigen::Matrix<float, 3, 4> Tcw1;
 
+    // 做一个以第一帧坐标系为坐标系的 三角化
     // 3. 设定变换矩阵用于三角化
     Tcw1 << Eigen::Matrix3f::Identity(), Eigen::Vector3f::Zero();
 
@@ -478,7 +485,7 @@ float KannalaBrandt8::TriangulateMatches(
     Eigen::Matrix3f R21 = R12.transpose();
     Tcw2 << R21, -R21 * t12;
 
-    // 4. 三角化
+    // 4. 三角化 x3D输出
     Triangulate(p11, p22, Tcw1, Tcw2, x3D);
     // cv::Mat x3Dt = x3D.t();
 
@@ -489,6 +496,7 @@ float KannalaBrandt8::TriangulateMatches(
         return -2;
     }
 
+    // 再转到相机2的坐标系下
     float z2 = R21.row(2).dot(x3D) + Tcw2(2, 3);
     if (z2 <= 0)
     {
@@ -496,7 +504,7 @@ float KannalaBrandt8::TriangulateMatches(
     }
 
     // Check reprojection error
-    // 5. 做下投影计算重投影误差
+    // 5. 做下投影计算重投影误差，预测比较离谱也不行，在两个相机坐标系下都做这个
     Eigen::Vector2f uv1 = this->project(x3D);
 
     float errX1 = uv1(0) - kp1.pt.x;

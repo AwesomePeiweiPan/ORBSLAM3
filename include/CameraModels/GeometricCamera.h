@@ -40,6 +40,7 @@
 #include "GeometricTools.h"
 
 namespace ORB_SLAM3 {
+    // 相机的基类
     class GeometricCamera {
 
         friend class boost::serialization::access;
@@ -58,6 +59,9 @@ namespace ORB_SLAM3 {
         GeometricCamera(const std::vector<float> &_vParameters) : mvParameters(_vParameters) {}
         ~GeometricCamera() {}
 
+        // 投影 
+        // 虚函数 = 0，只要这个类里面有一个 = 0，则为纯虚类，所以不能使用类直接实例化，只能派生
+        // 派生类中一定要重写 = 0 的虚函数
         virtual cv::Point2f project(const cv::Point3f &p3D) = 0;
         virtual Eigen::Vector2d project(const Eigen::Vector3d & v3D) = 0;
         virtual Eigen::Vector2f project(const Eigen::Vector3f & v3D) = 0;
@@ -65,9 +69,11 @@ namespace ORB_SLAM3 {
 
         virtual float uncertainty2(const Eigen::Matrix<double,2,1> &p2D) = 0;
 
+        // 反投影
         virtual Eigen::Vector3f unprojectEig(const cv::Point2f &p2D) = 0;
         virtual cv::Point3f unproject(const cv::Point2f &p2D) = 0;
 
+        // Jacobian
         virtual Eigen::Matrix<double,2,3> projectJac(const Eigen::Vector3d& v3D) = 0;
 
         virtual bool ReconstructWithTwoViews(const std::vector<cv::KeyPoint>& vKeys1, const std::vector<cv::KeyPoint>& vKeys2, const std::vector<int> &vMatches12,

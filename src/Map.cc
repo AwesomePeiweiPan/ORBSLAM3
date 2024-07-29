@@ -23,6 +23,8 @@
 namespace ORB_SLAM3
 {
 
+//静态成员变量，所有对象共享这个变量
+//由于是在外部定义，因此不需要再次使用static关键字
 long unsigned int Map::nNextId = 0;
 
 Map::Map()
@@ -33,12 +35,33 @@ Map::Map()
     mThumbnail = static_cast<GLubyte *>(NULL);
 }
 
+/**
+ * @brief mnInitKFid 初始化关键帧ID。记录创建地图时第一个关键帧的ID。
+ * @brief mnMaxKFid 当前地图中最大的关键帧ID。用于跟踪地图中的关键帧ID范围。
+ * @brief mnBigChangeIdx 大变化索引，用于记录地图发生重大变化的次数。
+ * @brief mIsInUse 指示当前地图是否正在使用。
+ * @brief mHasTumbnail 指示地图是否有缩略图。缩略图通常用于可视化和调试。
+ * @brief mbBad 指示地图是否被标记为不良地图（Bad Map）。不良地图可能包含错误或不完整的数据。
+ * @brief mbImuInitialized 指示地图中的IMU是否已初始化。IMU初始化对于融合视觉和惯性数据至关重要。
+ * @brief mpFirstRegionKF 指向第一个区域关键帧的指针。用于区域管理和定位。
+ * @brief mnMapChange 地图变化计数器，记录地图被修改的次数。
+ * @brief mbFail 指示地图构建过程中是否出现失败。
+ * @brief mnMapChangeNotified 记录已通知的地图变化次数。用于同步和协调。
+ * @brief mbIsInertial 指示地图是否包含惯性信息。
+ * @brief mbIMU_BA1 用于标记IMU数据的批处理调整状态。
+ * @brief mbIMU_BA2 用于标记IMU数据的批处理调整状态。
+ * @brief mnId 地图ID。每个地图实例都有一个唯一的ID，由静态变量nNextId生成。
+ * @brief mThumbnail 指向地图缩略图的指针。缩略图用于可视化地图内容。
+ */
+
 Map::Map(int initKFid)
     : mnInitKFid(initKFid), mnMaxKFid(initKFid), /*mnLastLoopKFid(initKFid),*/ mnBigChangeIdx(0), mIsInUse(false),
     mHasTumbnail(false), mbBad(false), mbImuInitialized(false), mpFirstRegionKF(static_cast<KeyFrame *>(NULL)),
     mnMapChange(0), mbFail(false), mnMapChangeNotified(0), mbIsInertial(false), mbIMU_BA1(false), mbIMU_BA2(false)
 {
+    // 先赋值，再递增 nNextId
     mnId = nNextId++;
+    // Glubyte 为无符号 字节类型 设置为NULL 表示 mThumbnail 没有被分配实际的内存
     mThumbnail = static_cast<GLubyte *>(NULL);
 }
 

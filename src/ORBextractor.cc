@@ -1664,6 +1664,7 @@ static void computeDescriptors(const Mat& image, vector<KeyPoint>& keypoints, Ma
                     keypoint->pt *= scale;
                 }
                 // ?TODO vLappingArea 
+                // 这里vLappingArea[0], [1]就是camera.lappingBegin和camera.lappingEnd,关键点在范围内就倒着放，范围外就正着放
                 if(keypoint->pt.x >= vLappingArea[0] && keypoint->pt.x <= vLappingArea[1]){
                     _keypoints.at(stereoIndex) = (*keypoint);
                     desc.row(i).copyTo(descriptors.row(stereoIndex));

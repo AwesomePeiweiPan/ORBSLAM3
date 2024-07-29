@@ -144,7 +144,7 @@ public:
     long unsigned int GetNumLivedMP();
 
 protected:
-
+    // set保证 地图集合的唯一性
     std::set<Map*> mspMaps;
     std::set<Map*> mspBadMaps;
     // Its necessary change the container from set to vector because libboost 1.58 and Ubuntu 16.04 have an error with this cointainer
@@ -164,7 +164,7 @@ protected:
     ORBVocabulary* mpORBVocabulary;
 
     // Mutex
-    std::mutex mMutexAtlas;
+    std::mutex mMutexAtlas; 
 
 
 }; // class Atlas

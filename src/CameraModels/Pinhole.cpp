@@ -129,7 +129,7 @@ Eigen::Matrix<double, 2, 3> Pinhole::projectJac(const Eigen::Vector3d &v3D)
     return Jac;
 }
 
-/** 三角化恢复三维点  单目初始化时使用
+/** 三角化恢复三维点  单目初始化时使用，提供了K值，索性放在这里
  * @param vKeys1 第一帧的关键点
  * @param vKeys2 第二帧的关键点
  * @param vMatches12 匹配关系，长度与vKeys1一样，对应位置存放vKeys2中关键点的下标
@@ -183,6 +183,7 @@ Eigen::Matrix3f Pinhole::toK_()
  * @param unc 特征点2的尺度的平方，1.2^2n
  * @return 三维点恢复的成功与否
  */
+// 极线约束目的：三角化的时候验证匹配关系
 bool Pinhole::epipolarConstrain(
     GeometricCamera *pCamera2, const cv::KeyPoint &kp1, const cv::KeyPoint &kp2,
     const Eigen::Matrix3f &R12, const Eigen::Vector3f &t12, const float sigmaLevel, const float unc)
@@ -191,12 +192,13 @@ bool Pinhole::epipolarConstrain(
     Eigen::Matrix3f t12x = Sophus::SO3f::hat(t12);
     Eigen::Matrix3f K1 = this->toK_();
     Eigen::Matrix3f K2 = pCamera2->toK_();
+    //组成F12矩阵
     Eigen::Matrix3f F12 = K1.transpose().inverse() * t12x * R12 * K2.inverse();
 
     // Epipolar line in second image l = x1'F12 = [a b c]
     //                      u2,
-    // (u1, v1, 1) * F12 * (v2,) = 0   -->  (a, b, c) * (u2, v2, 1)^t = 0 --> a*u2 + b*v2 + c = 0
-    //                       1
+    // (u1, v1, 1) * F12 * (u2, v2, 1) = 0   -->  (a, b, c) * (u2, v2, 1)^t = 0 --> a*u2 + b*v2 + c = 0   类似于点带入直线中的感觉，看看符不符合这个式子
+    //                       
     const float a = kp1.pt.x * F12(0, 0) + kp1.pt.y * F12(1, 0) + F12(2, 0);
     const float b = kp1.pt.x * F12(0, 1) + kp1.pt.y * F12(1, 1) + F12(2, 1);
     const float c = kp1.pt.x * F12(0, 2) + kp1.pt.y * F12(1, 2) + F12(2, 2);
@@ -211,7 +213,7 @@ bool Pinhole::epipolarConstrain(
         return false;
 
     const float dsqr = num * num / den;
-
+    // 小于阈值，可以认为点在直线上，即通过了极线约束
     return dsqr < 3.84 * unc;
 }
 

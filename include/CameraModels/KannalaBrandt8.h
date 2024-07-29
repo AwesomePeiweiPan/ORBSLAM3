@@ -45,6 +45,7 @@ namespace ORB_SLAM3 {
             mnType = CAM_FISHEYE;
         }
         KannalaBrandt8(const std::vector<float> _vParameters) : GeometricCamera(_vParameters), precision(1e-6), mvLappingArea(2,0) ,tvr(nullptr) {
+            // KB模型默认 8 个 fx fy cx cy k1=1 k2 k3 k4
             assert(mvParameters.size() == 8);
             mnId=nNextId++;
             mnType = CAM_FISHEYE;
@@ -74,13 +75,14 @@ namespace ORB_SLAM3 {
 
         Eigen::Matrix<double,2,3> projectJac(const Eigen::Vector3d& v3D);
 
-
+        // 算 H矩阵 和 F矩阵
         bool ReconstructWithTwoViews(const std::vector<cv::KeyPoint>& vKeys1, const std::vector<cv::KeyPoint>& vKeys2, const std::vector<int> &vMatches12,
                                      Sophus::SE3f &T21, std::vector<cv::Point3f> &vP3D, std::vector<bool> &vbTriangulated);
 
         cv::Mat toK();
         Eigen::Matrix3f toK_();
 
+        // 同样有 极线约束
         bool epipolarConstrain(GeometricCamera* pCamera2, const cv::KeyPoint& kp1, const cv::KeyPoint& kp2, const Eigen::Matrix3f& R12, const Eigen::Vector3f& t12, const float sigmaLevel, const float unc);
 
         float TriangulateMatches(GeometricCamera* pCamera2, const cv::KeyPoint& kp1, const cv::KeyPoint& kp2,  const Eigen::Matrix3f& R12, const Eigen::Vector3f& t12, const float sigmaLevel, const float unc, Eigen::Vector3f& p3D);

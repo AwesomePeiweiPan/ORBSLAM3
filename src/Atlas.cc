@@ -31,8 +31,10 @@ Atlas::Atlas()
     mpCurrentMap = static_cast<Map *>(NULL);
 }
 
+// mnLastInitKFidMap 是Atlas的 protected类型
 Atlas::Atlas(int initKFid) : mnLastInitKFidMap(initKFid), mHasViewer(false)
 {
+    // 初始化空 Map指针 给 Atlas 的 protected类型 mpCurrentMap 指针
     mpCurrentMap = static_cast<Map *>(NULL);
     CreateNewMap();
 }

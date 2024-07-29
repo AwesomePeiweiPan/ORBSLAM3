@@ -52,16 +52,41 @@ namespace ORB_SLAM3
 
 /**
  * @brief 跟踪线程构造函数
- * @param pSys 系统类指针
- * @param pVoc 词典
+ * @param pSys 指向系统类的指针，用于访问系统级别的功能和数据
+ * @param pVoc 指向ORB词典的指针，用于特征点描述子的词汇库
  * @param pFrameDrawer 画图像的
  * @param pMapDrawer 画地图的
- * @param pAtlas atlas
- * @param pKFDB 关键帧词典数据库
+ * @param pAtlas 指向Atlas的指针，Atlas是管理多个地图对象的类
+ * @param pKFDB 指向关键帧数据库的指针，用于管理关键帧数据
  * @param strSettingPath 参数文件路径
  * @param sensor 传感器类型
  * @param settings 参数类
  * @param _strSeqName 序列名字，没用到
+ * 
+ * @brief 构造函数的变量
+ * @param mState 被初始化为 NO_IMAGES_YET，表示尚未接收到图像
+ * @param mSensor 被初始化为传入的 sensor 参数，表示传感器类型
+ * @param mTrackedFr 被初始化为 0，表示已跟踪的帧数
+ * @param mbStep 被初始化为 false，表示单步模式标志
+ * @param mbOnlyTracking 被初始化为 false，表示仅跟踪模式标志
+ * @param mbMapUpdated 被初始化为 false，表示地图更新标志
+ * @param mbVO 被初始化为 false，表示视觉里程计模式标志
+ * @param mpORBVocabulary 被初始化为传入的 pVoc 参数，表示 ORB 词典指针
+ * @param mpKeyFrameDB 被初始化为传入的 pKFDB 参数，表示关键帧数据库指针
+ * @param mbReadyToInitializate 被初始化为 false，表示准备初始化标志
+ * @param mpSystem 被初始化为传入的 pSys 参数，表示系统类指针
+ * @param mpViewer 被初始化为 NULL，表示 Viewer 指针
+ * @param bStepByStep 被初始化为 false，表示逐步执行模式标志
+ * @param mpFrameDrawer 被初始化为传入的 pFrameDrawer 参数，表示 FrameDrawer 指针
+ * @param mpMapDrawer 被初始化为传入的 pMapDrawer 参数，表示 MapDrawer 指针
+ * @param mpAtlas 被初始化为传入的 pAtlas 参数，表示 Atlas 指针
+ * @param mnLastRelocFrameId 被初始化为 0，表示最后一次重定位的帧 ID
+ * @param time_recently_lost 被初始化为 5.0，表示最近丢失的时间
+ * @param mnInitialFrameId 被初始化为 0，表示初始帧 ID
+ * @param mbCreatedMap 被初始化为 false，表示地图创建标志
+ * @param mnFirstFrameId 被初始化为 0，表示第一帧 ID
+ * @param mpCamera2 被初始化为 nullptr，表示第二相机指针
+ * @param mpLastKeyFrame 被初始化为 NULL，表示最后一个关键帧指针
  */
 Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer,
     Atlas *pAtlas, KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor, Settings* settings, const string &_nameSeq)

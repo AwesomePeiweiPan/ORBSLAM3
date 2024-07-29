@@ -51,7 +51,7 @@ float Settings::readParameter<float>(cv::FileStorage &fSettings, const std::stri
             return 0.0f;
         }
     }
-    else if (!node.isReal())
+    else if (!node.isReal())                                
     {
         std::cerr << name << " parameter must be a real number, aborting..." << std::endl;
         exit(-1);
@@ -63,6 +63,8 @@ float Settings::readParameter<float>(cv::FileStorage &fSettings, const std::stri
     }
 }
 
+// 三个模版函数的特化，
+// template<typename T> T readParameter(cv::FileStorage& fSettings, const std::string& name, bool& found,const bool required = true) 基本函数
 template <>
 int Settings::readParameter<int>(cv::FileStorage &fSettings, const std::string &name, bool &found, const bool required)
 {
@@ -148,11 +150,20 @@ cv::Mat Settings::readParameter<cv::Mat>(cv::FileStorage &fSettings, const std::
     }
 }
 
+/**
+ * @brief: 负责从配置文件中读区各种设置，并且根据这些设置初始化系统的各个部分
+ * @param[in] configFile 配置文件的路径
+ * @param[in] sensor 传感器的类型
+ * 构造函数 初始化了 4个 类私有变量
+ */
+
 Settings::Settings(const std::string &configFile, const int &sensor) : bNeedToUndistort_(false), bNeedToRectify_(false), bNeedToResize1_(false), bNeedToResize2_(false)
-{
+{   
+    // 私有变量赋值
     sensor_ = sensor;
 
     // Open settings file
+    // 查看文件是否可以打开
     cv::FileStorage fSettings(configFile, cv::FileStorage::READ);
     if (!fSettings.isOpened())
     {
@@ -167,10 +178,12 @@ Settings::Settings(const std::string &configFile, const int &sensor) : bNeedToUn
     }
 
     // Read first camera
+    // 读取第一个摄像头信息
     readCamera1(fSettings);
     cout << "\t-Loaded camera 1" << endl;
 
     // Read second camera if stereo (not rectified)
+    // 立体 或 RGB ，读取第二个摄像头信息
     if (sensor_ == System::STEREO || sensor_ == System::IMU_STEREO)
     {
         readCamera2(fSettings);
@@ -178,30 +191,41 @@ Settings::Settings(const std::string &configFile, const int &sensor) : bNeedToUn
     }
 
     // Read image info
+    // 读取图片信息
     readImageInfo(fSettings);
     cout << "\t-Loaded image info" << endl;
 
+    // 根据 IMU与相机模型的组合 读取 IMU 信息
     if (sensor_ == System::IMU_MONOCULAR || sensor_ == System::IMU_STEREO || sensor_ == System::IMU_RGBD)
     {
         readIMU(fSettings);
         cout << "\t-Loaded IMU calibration" << endl;
     }
 
+    // 
     if (sensor_ == System::RGBD || sensor_ == System::IMU_RGBD)
     {
         readRGBD(fSettings);
         cout << "\t-Loaded RGB-D calibration" << endl;
     }
 
+    // ORB特征相关信息读取
     readORB(fSettings);
     cout << "\t-Loaded ORB settings" << endl;
+
+    // 查看器相关设置
     readViewer(fSettings);
     cout << "\t-Loaded viewer settings" << endl;
+
+    // Atlas 加载和保存的相关设置
     readLoadAndSave(fSettings);
     cout << "\t-Loaded Atlas settings" << endl;
+
+    // 其它杂项参数
     readOtherParameters(fSettings);
     cout << "\t-Loaded misc parameters" << endl;
 
+    // 预计算矫正映射
     if (bNeedToRectify_)
     {
         precomputeRectificationMaps();
@@ -308,6 +332,9 @@ void Settings::readCamera1(cv::FileStorage &fSettings)
             int colEnd = readParameter<int>(fSettings, "Camera1.overlappingEnd", found);
             vector<int> vOverlapping = {colBegin, colEnd};
 
+            // static_cast: 向上转换 (派生 - > 基类)；向下转换（基类 - > 派生类）dynamic_cast: 向下转换 会进行检查，可能会报错
+            // 将 calibration1_ 强制转换为  KannalaBrandt8* 指针类型；不检查直接转换，被认为一定是安全转换
+            // 并且 设置 mvLappingArea属性为 vOverlapping
             static_cast<KannalaBrandt8 *>(calibration1_)->mvLappingArea = vOverlapping;
         }
     }
@@ -386,6 +413,7 @@ void Settings::readCamera2(cv::FileStorage &fSettings)
     if (cameraType_ == Rectified)
     {
         b_ = readParameter<float>(fSettings, "Stereo.b", found);
+        // 视差的概念：d（视差）=UL - UR,左右图的横坐标之差，3D点的深度z = f*b/d;视差与深度z成反比;
         bf_ = b_ * calibration1_->getParameter(0);
     }
     else
@@ -396,6 +424,7 @@ void Settings::readCamera2(cv::FileStorage &fSettings)
         // TODO: also search for Trl and invert if necessary
 
         b_ = Tlr_.translation().norm();
+        // 视差的概念：d（视差）=UL - UR,左右图的横坐标之差，3D点的深度z = f*b/d;视差与深度z成反比;
         bf_ = b_ * calibration1_->getParameter(0);
     }
 
@@ -436,6 +465,7 @@ void Settings::readImageInfo(cv::FileStorage &fSettings)
     int newWidth = readParameter<int>(fSettings, "Camera.newWidth", found, false);
     if (found)
     {
+        //???: 这里bNeedToResize1_怎么被定义了两次，难道不应该到2了嘛，要不是构造函数也没有用啊
         bNeedToResize1_ = true;
         newImSize_.width = newWidth;
 
@@ -453,6 +483,7 @@ void Settings::readImageInfo(cv::FileStorage &fSettings)
 
                 if (cameraType_ == KannalaBrandt)
                 {
+                    //根据新宽度 重新调整相机重叠区域参数
                     static_cast<KannalaBrandt8 *>(calibration1_)->mvLappingArea[0] *= scaleColFactor;
                     static_cast<KannalaBrandt8 *>(calibration1_)->mvLappingArea[1] *= scaleColFactor;
 
@@ -497,6 +528,7 @@ void Settings::readRGBD(cv::FileStorage &fSettings)
     depthMapFactor_ = readParameter<float>(fSettings, "RGBD.DepthMapFactor", found);
     thDepth_ = readParameter<float>(fSettings, "Stereo.ThDepth", found);
     b_ = readParameter<float>(fSettings, "Stereo.b", found);
+    // 视差的概念：d（视差）=UL - UR,左右图的横坐标之差，3D点的深度z = f*b/d;视差与深度z成反比;
     bf_ = b_ * calibration1_->getParameter(0);
 }
 
@@ -564,22 +596,52 @@ void Settings::precomputeRectificationMaps()
     cv::Mat R_r1_u1, R_r2_u2;
     cv::Mat P1, P2, Q;
 
+    //极线对齐函数：双目立体视觉拍摄的图像会有一定的几何变形，对齐后，两个图像中的对应点位于同一行，大大简化了立体匹配算法，因为只需沿着水平搜索
+    //这个函数只是用来计算中间过程的参数的
+    /**
+     * @para[in]    K1 K2 camera1DistortionCoef camera2DistortionCoef newImSize_ : 两个相机内参矩阵，畸变矩阵，图像大小
+     * @para[out]   R_r1_u1 R_r2_u2: 两个图像的3x3 旋转矩阵
+     * @para[out]   P1 P2 两个相机的投影矩阵，极线校正后会改变
+     * @para[out]   Q 存储视察-深度 映射矩阵
+     * @para[out]   cv::CALIB_ZERO_DISPARITY: 校正后两幅图像 这里说的是相机坐标系下的！主点在x坐标上对齐，并且对应的像素拥有相同的y坐标
+     * @para[out]   0 仅保留有效区域；1 保留所有像素；-1 有效像素和黑色边缘取得平衡
+     * @para[out]   newImSize_ 校正后的图像大小
+     */
     cv::stereoRectify(K1, camera1DistortionCoef(), K2, camera2DistortionCoef(), newImSize_,
                         R12, t12,
                         R_r1_u1, R_r2_u2, P1, P2, Q,
                         cv::CALIB_ZERO_DISPARITY, -1, newImSize_);
+
+    /**
+    * @brief 计算左相机的去畸变和校正变换映射矩阵。
+    *
+    * 该函数使用提供的相机内参、畸变系数、旋转矩阵和投影矩阵，计算左相机的去畸变和校正变换映射矩阵。
+    * 生成的映射矩阵（M1l_ 和 M2l_）用于将输入图像重映射到校正后的图像。
+    *
+    * @param K1 左相机的内参矩阵（3x3）。
+    * @param camera1DistortionCoef 左相机的畸变系数（包含5个元素的向量）。
+    * @param R_r1_u1 左相机的校正旋转矩阵（3x3）。
+    * @param P1 左相机的投影矩阵（3x4）。
+    * @param newImSize_ 输出校正图像的大小。
+    * @param CV_32F 输出映射矩阵的类型。
+    * @param M1l_ 存储计算出的第一个映射矩阵。
+    * @param M2l_ 存储计算出的第二个映射矩阵。
+    */
     cv::initUndistortRectifyMap(K1, camera1DistortionCoef(), R_r1_u1, P1.rowRange(0, 3).colRange(0, 3),
                                 newImSize_, CV_32F, M1l_, M2l_);
     cv::initUndistortRectifyMap(K2, camera2DistortionCoef(), R_r2_u2, P2.rowRange(0, 3).colRange(0, 3),
                                 newImSize_, CV_32F, M1r_, M2r_);
 
     // Update calibration
+    // 更新校准参数，一般情况下，索引参数为 0 fx; 1 fy; 2 cx; 3 cy;
     calibration1_->setParameter(P1.at<double>(0, 0), 0);
     calibration1_->setParameter(P1.at<double>(1, 1), 1);
     calibration1_->setParameter(P1.at<double>(0, 2), 2);
     calibration1_->setParameter(P1.at<double>(1, 2), 3);
 
     // Update bf
+    // 视差的概念：d（视差）=UL - UR,左右图的横坐标之差，3D点的深度z = f*b/d;视差与深度z成反比;
+    // 注意，这里的f 为 fx
     bf_ = b_ * P1.at<double>(0, 0);
 
     // Update relative pose between camera 1 and IMU if necessary

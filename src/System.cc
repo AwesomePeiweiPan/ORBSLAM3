@@ -35,7 +35,7 @@
 
 namespace ORB_SLAM3
 {
-
+// 定义静态变量 th 代表 日志等级
 Verbose::eLevel Verbose::th = Verbose::VERBOSITY_NORMAL;
 
 /**
@@ -51,6 +51,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
                const bool bUseViewer, const int initFr, const string &strSequence):
     mSensor(sensor), mpViewer(static_cast<Viewer*>(NULL)), mbReset(false), mbResetActiveMap(false),
     mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false), mbShutDown(false)
+    // 默认构造变量：eSensor: 传感器类型        指针：是否地图可视化        bool：是否整体重置 + 是否重置活跃地图 + 是否激活定位模式 + 是否关闭定位模式 + 是否关机
 {
     // Output welcome message
     cout << endl <<
@@ -76,7 +77,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         cout << "RGB-D-Inertial" << endl;        // RGBD相机 + imu
 
     //Check settings file
-    // Step 2 读取配置文件
+    // Step 2 读取配置文件: 以只读模式打开 .yaml 配置文件
     cv::FileStorage fsSettings(strSettingsFile.c_str(), cv::FileStorage::READ);
     // 如果打开失败，就输出错误信息
     if(!fsSettings.isOpened())
@@ -86,15 +87,19 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     }
 
     // 查看配置文件版本，不同版本有不同处理方法
+    // 这里由于 %YAML:1.0 因此版本号为 1.0
     cv::FileNode node = fsSettings["File.version"];
     if(!node.empty() && node.isString() && node.string() == "1.0")
     {
+        // System priviate变量
+        // 将配置文件中的很多参数放进来，包括几何校正
         settings_ = new Settings(strSettingsFile,mSensor);
 
-        // 保存及加载地图的名字
-        mStrLoadAtlasFromFile = settings_->atlasLoadFile();
-        mStrSaveAtlasToFile = settings_->atlasSaveFile();
+        // 保存及加载地图的名字，头文件就定义的简单函数
+        mStrLoadAtlasFromFile = settings_->atlasLoadFile();     //return sLoadFrom_;   
+        mStrSaveAtlasToFile = settings_->atlasSaveFile();       //return sSaveto_;
 
+        //重载 << 输出数据
         cout << (*settings_) << endl;
     }
     else
@@ -118,7 +123,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     bool activeLC = true;
     if(!node.empty())
     {
-        activeLC = static_cast<int>(fsSettings["loopClosing"]) != 0;
+        activeLC = static_cast<int>(fsSettings["loopClosing"]) != 0;        //除非你主动说了 我不要回环，否则我设置回环为真
     }
 
     mStrVocabularyFilePath = strVocFile;
