@@ -131,19 +131,24 @@ void Atlas::AddMapPoint(MapPoint *pMP)
 GeometricCamera *Atlas::AddCamera(GeometricCamera *pCam)
 {
     // Check if the camera already exists
+    // 初始化索引，当成这个相机没有出现过，并且索引为假
     bool bAlreadyInMap = false;
     int index_cam = -1;
     // 遍历地图中现有的相机看看跟输入的相机一不一样，不一样的话则向mvpCameras添加
     for (size_t i = 0; i < mvpCameras.size(); ++i)
     {
+        // 获取当前相机的指针
         GeometricCamera *pCam_i = mvpCameras[i];
+        // 检查指针是否为空
         if (!pCam)
             std::cout << "Not pCam" << std::endl;
         if (!pCam_i)
             std::cout << "Not pCam_i" << std::endl;
+        // 如果发现与列表中的相机类型中的某一个不同，则进行下一次循环
         if (pCam->GetType() != pCam_i->GetType())
             continue;
 
+        // 
         if (pCam->GetType() == GeometricCamera::CAM_PINHOLE)
         {
             if (((Pinhole *)pCam_i)->IsEqual(pCam))
@@ -161,13 +166,14 @@ GeometricCamera *Atlas::AddCamera(GeometricCamera *pCam)
             }
         }
     }
-
+    // 如果已经存在了，就返回已经存在的相机类型，同样是一个 GeometricCamera指针
     if (bAlreadyInMap)
     {
         return mvpCameras[index_cam];
     }
     else
     {
+    // 相机列表 添加 相机
         mvpCameras.push_back(pCam);
         return pCam;
     }

@@ -589,6 +589,9 @@ Tracking::~Tracking()
  */
 void Tracking::newParameterLoader(Settings *settings) {
     // 1. 读取相机1
+    // mpCamera 属于 GeometircCamera类，是一个指针，这个类是一个纯虚类，只能通过指针去指代，不能实例化
+    // 通过 mpCamera，SLAM系统可以访问相机的内参和外参，并且相机模型定义了3D世界坐标和2D图像坐标的关系
+    // 从 settings 对象中读取相机配置,添加到 mvpCameras，如果已经存在则不添加
     mpCamera = settings->camera1();
     mpCamera = mpAtlas->AddCamera(mpCamera);
 
