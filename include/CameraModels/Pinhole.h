@@ -39,7 +39,7 @@ namespace ORB_SLAM3 {
     public:
         Pinhole() {
             mvParameters.resize(4);
-            mnId=nNextId++;
+            mnId=nNextId++;                 // 这里的nNextId属于 基 纯虚 类 GeometircCamera
             mnType = CAM_PINHOLE;
         }
         Pinhole(const std::vector<float> _vParameters) : GeometricCamera(_vParameters), tvr(nullptr) {
