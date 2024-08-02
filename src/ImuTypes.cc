@@ -157,9 +157,11 @@ IntegratedRotation::IntegratedRotation(const Eigen::Vector3f &angVel, const Bias
  * @param calib imu标定参数的类
  */
 Preintegrated::Preintegrated(const Bias &b_, const Calib &calib)
-{
+{   
+    // 随机游走最开始为 对角阵，并且为两种的方差
     Nga = calib.Cov;
     NgaWalk = calib.CovWalk;
+    // 更新预积分矩阵需要用到的
     Initialize(b_);
 }
 

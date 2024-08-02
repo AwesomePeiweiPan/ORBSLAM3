@@ -225,7 +225,9 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     //创建并开启local mapping线程
     mpLocalMapper = new LocalMapping(this, mpAtlas, mSensor==MONOCULAR || mSensor==IMU_MONOCULAR,
                                      mSensor==IMU_MONOCULAR || mSensor==IMU_STEREO || mSensor==IMU_RGBD, strSequence);
+    // 开启线程，调用 Run 成员函数的地址 (&)；并且在 mpLocalMapper 对象上 调用
     mptLocalMapping = new thread(&ORB_SLAM3::LocalMapping::Run,mpLocalMapper);
+    // 初始帧，默认0
     mpLocalMapper->mInitFr = initFr;
 
     // 设置最远3D地图点的深度值，如果超过阈值，说明可能三角化不太准确，丢弃
@@ -274,7 +276,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     }
 
     // Fix verbosity
-    // 打印输出中间的信息，设置为安静模式
+    // 打印输出中间的信息，设置为安静模式，只输出最重要的信息
     Verbose::SetTh(Verbose::VERBOSITY_QUIET);
 
 }

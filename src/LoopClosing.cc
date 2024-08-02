@@ -45,6 +45,36 @@ LoopClosing::LoopClosing(Atlas *pAtlas, KeyFrameDatabase *pDB, ORBVocabulary *pV
     mbStopGBA(false), mpThreadGBA(NULL), mbFixScale(bFixScale), mnFullBAIdx(0), mnLoopNumCoincidences(0), mnMergeNumCoincidences(0),
     mbLoopDetected(false), mbMergeDetected(false), mnLoopNumNotFound(0), mnMergeNumNotFound(0), mbActiveLC(bActiveLC)
 {
+    /*
+        * mbResetRequested:            请求重置标志。为 true 时表示请求重置回环检测线程。
+        * mbResetActiveMapRequested:   请求重置活动地图标志。为 true 时表示请求重置活动地图。
+        * mbFinishRequested:           请求终止回环检测线程标志。为 true 时表示请求终止线程。
+        * mbFinished:                  线程完成标志。为 true 时表示回环检测线程已完成。
+        * mpAtlas:                     指向 Atlas 对象的指针，用于访问和管理地图信息。
+        * mpKeyFrameDB:                指向关键帧数据库对象的指针，用于关键帧的存储和检索。
+        * mpORBVocabulary:             指向 ORB 词汇对象的指针，用于关键帧描述子的词袋模型。
+        * mpMatchedKF:                 指向匹配的关键帧的指针，用于回环检测过程中存储当前匹配的关键帧。
+        * mLastLoopKFid:               上一次检测到回环的关键帧 ID。
+        * mbRunningGBA:                正在运行全局 BA（Bundle Adjustment）优化的标志。
+        * mbFinishedGBA:               全局 BA 优化完成标志。
+        * mbStopGBA:                   请求停止全局 BA 优化的标志。
+        * mpThreadGBA:                 指向全局 BA 优化线程的指针。
+        * mbFixScale:                  是否固定尺度。除单目相机外，都为 true。
+        * mnFullBAIdx:                 全局 BA 优化的索引。
+        * mnLoopNumCoincidences:       回环检测过程中关键帧匹配的次数。
+        * mnMergeNumCoincidences:      地图合并过程中关键帧匹配的次数。
+        * mbLoopDetected:              回环检测标志。为 true 表示检测到回环。
+        * mbMergeDetected:             地图合并标志。为 true 表示检测到地图合并。
+        * mnLoopNumNotFound:           回环检测过程中未找到匹配的关键帧次数。
+        * mnMergeNumNotFound:          地图合并过程中未找到匹配的关键帧次数。
+        * mbActiveLC:                  回环检测激活标志。为 true 表示开启回环检测。
+        * mnCovisibilityConsistencyTh: 连续性阈值，用于回环检测的一致性检查。
+        * mpLastCurrentKF:             指向最后一个当前关键帧的指针。
+        * mstrFolderSubTraj:           子轨迹文件夹名称，用于存储子轨迹。
+        * mnNumCorrection:             校正次数，用于记录回环检测和地图合并的校正次数。
+        * mnCorrectionGBA:             全局 BA 校正次数，用于记录全局 BA 的校正次数。
+ */
+
     // 连续性阈值
     mnCovisibilityConsistencyTh = 3;
     mpLastCurrentKF = static_cast<KeyFrame*>(NULL);

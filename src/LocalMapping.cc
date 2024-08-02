@@ -45,15 +45,36 @@ LocalMapping::LocalMapping(System* pSys, Atlas *pAtlas, const float bMonocular, 
 {
 
     /*
-     * mbStopRequested:    外部线程调用，为true，表示外部线程请求停止 local mapping
-     * mbStopped:          为true表示可以并终止localmapping 线程
-     * mbNotStop:          true，表示不要停止 localmapping 线程，因为要插入关键帧了。需要和 mbStopped 结合使用
-     * mbAcceptKeyFrames:  true，允许接受关键帧。tracking 和local mapping 之间的关键帧调度
-     * mbAbortBA:          是否流产BA优化的标志位
-     * mbFinishRequested:  请求终止当前线程的标志。注意只是请求，不一定终止。终止要看 mbFinished
-     * mbResetRequested:   请求当前线程复位的标志。true，表示一直请求复位，但复位还未完成；表示复位完成为false
-     * mbFinished:         判断最终LocalMapping::Run() 是否完成的标志。
-     */
+        * mpSystem:             指向系统对象的指针，用于访问系统级别的功能和资源。
+        * mbMonocular:          为true表示使用单目相机。
+        * mbInertial:           为true表示使用惯性测量单元 (IMU)。
+        * mbResetRequested:     请求当前线程复位的标志。true，表示一直请求复位，但复位还未完成；表示复位完成为false。
+        * mbResetRequestedActiveMap: 请求复位活动地图的标志。
+        
+        * mbFinishRequested:    请求终止当前线程的标志。注意只是请求，不一定终止。终止要看 mbFinished。
+        * mbFinished:           判断最终LocalMapping::Run() 是否完成的标志。true 表示线程已完成，false 表示仍在运行。
+        * mbStopRequested:      外部线程调用，为true，表示外部线程请求停止 local mapping。
+        * mbNotStop:            true，表示不要停止 localmapping 线程，因为要插入关键帧了。需要和 mbStopped 结合使用。
+        
+        * mpAtlas:              指向 Atlas 对象的指针，用于访问地图和相机信息。
+        * bInitializing:        为true表示正在进行初始化过程。
+        * mbAbortBA:            是否流产BA优化的标志位。
+        * mbStopped:            为true表示可以并终止localmapping 线程。
+        * mbAcceptKeyFrames:    true，允许接受关键帧。tracking 和local mapping 之间的关键帧调度。
+        * mIdxInit:             初始化索引。用于初始化过程中的计数。
+        * mScale:               缩放比例。通常用于调整地图或关键帧的尺度。
+        * mInitSect:            初始化阶段。用于记录初始化的具体阶段。
+        * mbNotBA1:             第一个 BA 优化的标志位。true 表示不进行 BA 优化。
+        * mbNotBA2:             第二个 BA 优化的标志位。true 表示不进行 BA 优化。
+        * mIdxIteration:        迭代索引。用于记录 BA 优化或其他迭代过程的计数。
+        * infoInertial:         惯性信息矩阵。初始化为 9x9 的零矩阵，用于存储惯性测量相关的信息。
+        * mnMatchesInliers:     匹配的 inliers 数量。用于记录匹配过程中符合条件的点对数量。
+        * mbBadImu:             IMU 状态标志。false 表示 IMU 状态良好，true 表示 IMU 状态不佳。
+        * mTinit:               初始化时间。用于记录初始化过程所需的时间。
+        * mNumLM:               Local Mapping 数量。用于记录 Local Mapping 过程中的计数。
+        * mNumKFCulling:        关键帧剔除数量。用于记录剔除的关键帧数量。
+    */
+
     mnMatchesInliers = 0;
 
     mbBadImu = false;

@@ -463,8 +463,9 @@ static void computeOrbDescriptor(const KeyPoint& kpt,
                     -1,-6, 0,-11/*mean (0.127148), correlation (0.547401)*/
             };
 
-//特征点提取器的构造函数
 
+//特征点提取器的构造函数
+//包括图像金字塔的缩放系数、各层的特征点分配、BEIEF描述子的随机采样点、旋转计算所需要的参数
 ORBextractor::ORBextractor(int _nfeatures,		//指定要提取的特征点数目
 						   float _scaleFactor,	//指定图像金字塔的缩放系数
 						   int _nlevels,		//指定图像金字塔的层数
@@ -483,9 +484,11 @@ ORBextractor::ORBextractor(int _nfeatures,		//指定要提取的特征点数目
     mvLevelSigma2[0]=1.0f;
 	//然后逐层计算图像金字塔中图像相当于初始图像的缩放系数 
     for(int i=1; i<nlevels; i++)  
-    {
+    {   
+        // mvScaleFactor: 存储每层图像相对于初始图像的缩放系数
 		//其实就是这样累乘计算得出来的
         mvScaleFactor[i]=mvScaleFactor[i-1]*scaleFactor;
+        // mvLevelSigma2: 存储每层图像 缩放系数的平方
 		//原来这里的sigma^2就是每层图像相对于初始图像缩放因子的平方
         mvLevelSigma2[i]=mvScaleFactor[i]*mvScaleFactor[i];
     }
@@ -494,15 +497,17 @@ ORBextractor::ORBextractor(int _nfeatures,		//指定要提取的特征点数目
     mvInvScaleFactor.resize(nlevels);
     mvInvLevelSigma2.resize(nlevels);
     for(int i=0; i<nlevels; i++)
-    {
+    {   
+        // 每层图像相对于初始图像缩放系数的倒数
         mvInvScaleFactor[i]=1.0f/mvScaleFactor[i];
+        // 每层图像，缩放系数倒数的平方
         mvInvLevelSigma2[i]=1.0f/mvLevelSigma2[i];
     }
 
-    //调整图像金字塔vector以使得其符合咱们设定的图像层数
+    //调整图像金字塔vector以使得其符合咱们设定的图像层数 std::vector<cv::Mat> mvImagePyramid;
     mvImagePyramid.resize(nlevels);
 
-	//每层需要提取出来的特征点个数，这个向量也要根据图像金字塔设定的层数进行调整
+	//每层需要提取出来的特征点个数，这个向量也要根据图像金字塔设定的层数进行调整 std::vector<int> mnFeaturesPerLevel;
     mnFeaturesPerLevel.resize(nlevels);
 	
 	//图片降采样缩放系数的倒数
@@ -531,7 +536,7 @@ ORBextractor::ORBextractor(int _nfeatures,		//指定要提取的特征点数目
 	//注意到pattern0数据类型为Points*,bit_pattern_31_是int[]型，所以这里需要进行强制类型转换
     const Point* pattern0 = (const Point*)bit_pattern_31_;	
 	//使用std::back_inserter的目的是可以快覆盖掉这个容器pattern之前的数据
-	//其实这里的操作就是，将在全局变量区域的、int格式的随机采样点以cv::point格式复制到当前类对象中的成员变量中
+	//其实这里的操作就是，将在全局变量区域的、int格式的随机采样点以cv::point格式复制到当前类对象中的成员变量中 std::vector<cv::Point> pattern;
     std::copy(pattern0, pattern0 + npoints, std::back_inserter(pattern));
 
     //This is for orientation

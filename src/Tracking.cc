@@ -143,9 +143,11 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
             }
         }
     }
-
+    // 初始化第一个存储的关键帧ID；存储最近处理的帧ID
     initID = 0; lastID = 0;
+    // 是否用三个关键帧初始化
     mbInitWith3KFs = false;
+    // 多个数据集
     mnNumDataset = 0;
 
     // 遍历下地图中的相机，然后打印出来了
@@ -667,16 +669,20 @@ void Tracking::newParameterLoader(Settings *settings) {
     // 3. 读取imu参数
     Sophus::SE3f Tbc = settings->Tbc();
     mInsertKFsLost = settings->insertKFsWhenLost();
-    mImuFreq = settings->imuFrequency();
-    mImuPer = 0.001; //1.0 / (double) mImuFreq;     //TODO: ESTO ESTA BIEN?
+    mImuFreq = settings->imuFrequency();               // 配置文件中的采样频率 
+    mImuPer = 0.001; //1.0 / (double) mImuFreq;        //TODO: ESTO ESTA BIEN? IMU数据周期
     float Ng = settings->noiseGyro();
     float Na = settings->noiseAcc();
     float Ngw = settings->gyroWalk();
     float Naw = settings->accWalk();
 
+    // IMU频率的平方根
     const float sf = sqrt(mImuFreq);
+    // 噪声除以时间开根；随机游走乘以时间开根，IMU和body的转换矩阵获得
     mpImuCalib = new IMU::Calib(Tbc,Ng*sf,Na*sf,Ngw/sf,Naw/sf);
 
+    // 解释参数 Bias():bax(0),bay(0),baz(0),bwx(0),bwy(0),bwz(0){}
+    // 给这个类定义 噪声和随机游走的 方差矩阵；预积分过程中需要用到的矩阵
     mpImuPreintegratedFromLastKF = new IMU::Preintegrated(IMU::Bias(),*mpImuCalib);
 }
 
