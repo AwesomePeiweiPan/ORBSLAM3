@@ -450,8 +450,8 @@ Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, 
 
     {
         unique_lock<mutex> lock(mMutexReset);
-        if(mbShutDown)
-            return Sophus::SE3f();
+        if(mbShutDown)               // SLAM.Shutdown();
+            return Sophus::SE3f();   // 平移为0 旋转为单位向量
     }
     // 确保是单目或单目VIO模式
     if(mSensor!=MONOCULAR && mSensor!=IMU_MONOCULAR)
@@ -461,6 +461,7 @@ Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, 
     }
 
     cv::Mat imToFeed = im.clone();
+    // 初始化的时候如果需要设置新的图像尺寸，则这个条件为真
     if(settings_ && settings_->needToResize()){
         cv::Mat resizedIm;
         cv::resize(im,resizedIm,settings_->newImSize());
@@ -483,15 +484,14 @@ Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, 
             }
             // 局部地图关闭以后，只进行追踪的线程，只计算相机的位姿，没有对局部地图进行更新
             mpTracker->InformOnlyTracking(true);
-            // 关闭线程可以使得别的线程得到更多的资源
+            // 关闭线程可以使得别的线程得到更多的资源 防止重复运行这个判定
             mbActivateLocalizationMode = false;
         }
         if(mbDeactivateLocalizationMode)
         {
             mpTracker->InformOnlyTracking(false);
             mpLocalMapper->Release();
-            mbDeactivateLocalizationMode = false;
-        }
+            mbDeactivateLocalizationMode = false;        }
     }
 
     // Check reset
@@ -519,7 +519,7 @@ Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, 
     // 计算相机位姿
     Sophus::SE3f Tcw = mpTracker->GrabImageMonocular(imToFeed,timestamp,filename);
 
-    // 更新跟踪状态和参数
+    // 更新跟踪状态和参数 锁锁下面的变量
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
     mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;

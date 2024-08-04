@@ -118,9 +118,11 @@ int main(int argc, char *argv[])
         LoadIMU(pathImu, vTimestampsImu[seq], vAcc[seq], vGyro[seq]);
         cout << "LOADED!" << endl;
 
-        //记录当前序列的图像数据量和IMU数据量；  累积到当前序列的图像总数量
+        //记录当前序列的图像数据量和IMU数据量；比如第0个序列100张图，nImages[0]=100
         nImages[seq] = vstrImageFilenames[seq].size();
+        //累积到当前序列的图像总数量
         tot_images += nImages[seq];
+        //比如第0个序列100个IMU序列，nImup[0]=100
         nImu[seq] = vTimestampsImu[seq].size();
 
         //防止没加载上
@@ -143,7 +145,7 @@ int main(int argc, char *argv[])
 
     cout.precision(17); //输出流确保 17位 有效数字，符合 double类型 精度
     
-    // ！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！SLAM 初始化！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
+    // !!!!!!!!!!!!!!!!!!!SLAM 初始化!!!!!!!!!!!!!!!!!!!
     //SLAM系统创建 指定: 词汇表路径 + EuRoC.yaml文件路径 + 单目模式 + 可视化
     ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::IMU_MONOCULAR, false);
     //获取图像缩放比例
@@ -157,7 +159,7 @@ int main(int argc, char *argv[])
     for (seq = 0; seq<num_seq; seq++)
     {                                                                                       
 
-        // Main loop 主循环
+        // ! Main loop 主循环
         cv::Mat im;  //存储图像数据                                         
         vector<ORB_SLAM3::IMU::Point> vImuMeas;  //IMU数据
         proccIm = 0;
@@ -228,7 +230,9 @@ int main(int argc, char *argv[])
             std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
             // Pass the image to the SLAM system
             // cout << "tframe = " << tframe << endl;
-            // ！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！跟踪线程作为主线程！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
+
+
+            // !!!!!!!!!!!跟踪线程作为主线程！!!!!!!!!!!!!!!!
             SLAM.TrackMonocular(im,tframe,vImuMeas); // TODO change to monocular_inertial
             // 定义结束追踪这一帧的时间点
             std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();

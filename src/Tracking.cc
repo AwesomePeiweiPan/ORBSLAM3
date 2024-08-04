@@ -1708,11 +1708,11 @@ Sophus::SE3f Tracking::GrabImageMonocular(const cv::Mat &im, const double &times
     if(mImGray.channels()==3)
     {
         if(mbRGB)
-            cvtColor(mImGray,mImGray,cv::COLOR_RGB2GRAY);
+            cvtColor(mImGray,mImGray,cv::COLOR_RGB2GRAY);   // RGB格式
         else
-            cvtColor(mImGray,mImGray,cv::COLOR_BGR2GRAY);
+            cvtColor(mImGray,mImGray,cv::COLOR_BGR2GRAY);   // BGR格式
     }
-    else if(mImGray.channels()==4)
+    else if(mImGray.channels()==4) // 带有 Alpha 通道
     {
         if(mbRGB)
             cvtColor(mImGray,mImGray,cv::COLOR_RGBA2GRAY);
@@ -1723,6 +1723,7 @@ Sophus::SE3f Tracking::GrabImageMonocular(const cv::Mat &im, const double &times
     // Step 2 ：构造Frame类
     if (mSensor == System::MONOCULAR)
     {
+        // 系统尚未初始化 || 系统还没有处理过任何图像 || 从初始化开始处理的帧数没有达到最大值 mMaxFrames
         if(mState==NOT_INITIALIZED || mState==NO_IMAGES_YET ||(lastID - initID) < mMaxFrames)
             mCurrentFrame = Frame(mImGray,timestamp,mpIniORBextractor,mpORBVocabulary,mpCamera,mDistCoef,mbf,mThDepth);
         else
@@ -4588,6 +4589,7 @@ void Tracking::Reset(bool bLocMap)
     if(mpViewer)
     {
         mpViewer->RequestStop();
+        // 没有停，则继续等待睡眠，直到 isStopped为真
         while(!mpViewer->isStopped())
             usleep(3000);
     }
@@ -4619,24 +4621,38 @@ void Tracking::Reset(bool bLocMap)
     mnInitialFrameId = 0;
 
     // 然后复位各种变量
+    // 关键帧 新帧 ID初始化
     KeyFrame::nNextId = 0;
     Frame::nNextId = 0;
+    // 跟踪状态 初始化
     mState = NO_IMAGES_YET;
 
+    // SLAM系统是否准备好初始化
     mbReadyToInitializate = false;
+    // 系统是否已经初始化
     mbSetInit=false;
 
+    // 清空 保存相对位姿的列表
     mlRelativeFramePoses.clear();
+    // 清空 每个帧的 参考关键帧 列表
     mlpReferences.clear();
+    // 清空 每个帧的 时间戳 列表
     mlFrameTimes.clear();
+    // 保存 每个帧是否丢失的标志
     mlbLost.clear();
+    // 表示正在处理的帧对象，将重置为默认构造 Frame 对象
     mCurrentFrame = Frame();
+    // 上一次重定位时的 帧ID
     mnLastRelocFrameId = 0;
+    // 上一个处理的帧对象
     mLastFrame = Frame();
+    // 当前参考关键帧指针
     mpReferenceKF = static_cast<KeyFrame*>(NULL);
+    // 上一个关键帧的指针
     mpLastKeyFrame = static_cast<KeyFrame*>(NULL);
+    // 保存初始化匹配的特征点对的向量
     mvIniMatches.clear();
-
+    // 重新启用
     if(mpViewer)
         mpViewer->Release();
 

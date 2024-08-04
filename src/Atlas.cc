@@ -73,7 +73,7 @@ void Atlas::CreateNewMap()
         if (!mspMaps.empty() && mnLastInitKFidMap < mpCurrentMap->GetMaxKFid())
             mnLastInitKFidMap = mpCurrentMap->GetMaxKFid() + 1; // The init KF is the next of current maximum
 
-        // 将当前地图储存起来，其实就是把mIsInUse标记为false
+        // 将当前地图储存起来，其实就是把mIsInUse标记为false0
         mpCurrentMap->SetStoredMap();
         cout << "Stored map with ID: " << mpCurrentMap->GetId() << endl;
 

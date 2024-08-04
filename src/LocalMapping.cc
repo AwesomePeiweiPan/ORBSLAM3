@@ -1139,10 +1139,12 @@ void LocalMapping::Release()
 {
     unique_lock<mutex> lock(mMutexStop);
     unique_lock<mutex> lock2(mMutexFinish);
+    // 如果局部建图线程都已经完成了，则立即返回避免不必要的工作
     if(mbFinished)
         return;
     mbStopped = false;
     mbStopRequested = false;
+    // mlNewKeyFrames: 在跟踪线程 和 局部地图线程 之间充当缓冲区，作为存储 等待处理的 关键帧的列表
     for(list<KeyFrame*>::iterator lit = mlNewKeyFrames.begin(), lend=mlNewKeyFrames.end(); lit!=lend; lit++)
         delete *lit;
     mlNewKeyFrames.clear();
