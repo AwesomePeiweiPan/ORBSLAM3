@@ -1736,7 +1736,7 @@ static void computeDescriptors(const Mat& image, vector<KeyPoint>& keypoints, Ma
         else
         {
 			//对于底层图像，直接就扩充边界了
-            //?temp 是在循环内部新定义的，在该函数里又作为输出，并没有使用啊！
+            //?temp 是在循环内部新定义的，在该函数里又作为输出，并没有使用啊！就这还当老师，cv:: Mat共享地址不知道吗
             copyMakeBorder(image,			//这里是原图像
 						   temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                            BORDER_REFLECT_101);            

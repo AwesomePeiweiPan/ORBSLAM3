@@ -1260,6 +1260,7 @@ void Frame::ComputeStereoMatches()
 
             // 计算滑动窗口滑动范围的边界，因为是块匹配，还要算上图像块的尺寸
             // 列方向起点 iniu = r0 + 最大窗口滑动范围 - 图像块尺寸
+            // ？ 不对啊，这块iniu不应该是 scaleduR0-L-w;吗
             // 列方向终点 eniu = r0 + 最大窗口滑动范围 + 图像块尺寸 + 1
             // 此次 + 1 和下面的提取图像块是列坐标+1是一样的，保证提取的图像块的宽是2 * w + 1
             const float iniu = scaleduR0+L-w;
@@ -1274,7 +1275,7 @@ void Frame::ComputeStereoMatches()
                 // 提取左图中，以特征点(scaleduL,scaledvL)为中心, 半径为w的图像快patch
                 cv::Mat IR = mpORBextractorRight->mvImagePyramid[kpL.octave].rowRange(scaledvL-w,scaledvL+w+1).colRange(scaleduR0+incR-w,scaleduR0+incR+w+1);
 
-                // sad 计算
+                // sad 计算 像素绝对值差 之和
                 float dist = cv::norm(IL,IR,cv::NORM_L1);
                 // 统计最小sad和偏移量
                 if(dist<bestDist)
@@ -1283,11 +1284,11 @@ void Frame::ComputeStereoMatches()
                     bestincR = incR;
                 }
 
-                // L+incR 为refine后的匹配点列坐标(x)
+                // L+incR 为refine后的匹配点列坐标(x) 存储滑动窗口内每个位置的相似度，即距离
                 vDists[L+incR] = dist;
             }
 
-            // 搜索窗口越界判断ß 
+            // 搜索窗口越界判断ß 匹配点在边界上也不可靠
             if(bestincR==-L || bestincR==L)
                 continue;
 

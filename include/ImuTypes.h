@@ -43,6 +43,7 @@ namespace IMU
 const float GRAVITY_VALUE=9.81;
 
 //IMU measurement (gyro, accelerometer and timestamp)
+// 代表了一个IMU观测：三个加速度，三个jiao su du
 class Point
 {
 public:
@@ -58,7 +59,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
-//IMU biases (gyro and accelerometer)
+//IMU biases (gyro and accelerometer) 偏置类型，三个加速度三个角速度
 class Bias
 {
     friend class boost::serialization::access;
@@ -88,7 +89,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
-//IMU calibration (Tbc, Tcb, noise)
+//IMU calibration (Tbc, Tcb, noise) 标定类型 IMU和相机的外参
 class Calib
 {
     friend class boost::serialization::access;
@@ -125,8 +126,8 @@ public:
     bool mbIsSet;
 };
 
-//Integration of 1 gyro measurement
-class IntegratedRotation
+//Integration of 1 gyro measurement 角度积分，一个IMU数据的IMU积分
+class IntegratedRotation    
 {
 public:
     IntegratedRotation(){}
@@ -208,12 +209,18 @@ public:
     }
 
 public:
-    float dT;
-    Eigen::Matrix<float,15,15> C;
-    Eigen::Matrix<float,15,15> Info;
+    // 预积分持续时间
+    float dT; 
+    // 15x15的协方差
+    Eigen::Matrix<float,15,15> C;   
+    // C的逆，信息矩阵           
+    Eigen::Matrix<float,15,15> Info;         
+    // 噪声和随机游走  
     Eigen::DiagonalMatrix<float,6> Nga, NgaWalk;
 
     // Values for the original bias (when integration was computed)
+    // 预积分的实现
+    // 更新之前的偏置
     Bias b;
     Eigen::Matrix3f dR;
     Eigen::Vector3f dV, dP;
@@ -226,6 +233,7 @@ private:
     Bias bu;    //更新后的零偏
     // Dif between original and updated bias
     // This is used to compute the updated values of the preintegration
+    // b -> bu，更新的量叫做db
     Eigen::Matrix<float,6,1> db;
 
     struct integrable
@@ -257,6 +265,7 @@ Eigen::Matrix3f RightJacobianSO3(const Eigen::Vector3f &v);
 Eigen::Matrix3f InverseRightJacobianSO3(const float &x, const float &y, const float &z);
 Eigen::Matrix3f InverseRightJacobianSO3(const Eigen::Vector3f &v);
 
+// 3x3矩阵，强制归一化
 Eigen::Matrix3f NormalizeRotation(const Eigen::Matrix3f &R);
 
 }

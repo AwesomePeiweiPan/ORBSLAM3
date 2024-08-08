@@ -50,6 +50,7 @@ Eigen::Matrix3f NormalizeRotation(const Eigen::Matrix3f &R)
  * @brief 计算右雅可比
  * @param xyz 李代数
  * @return Jr
+ * 公式 (1.6)
  */
 Eigen::Matrix3f RightJacobianSO3(const float &x, const float &y, const float &z)
 {
@@ -84,6 +85,7 @@ Eigen::Matrix3f RightJacobianSO3(const Eigen::Vector3f &v)
  * @brief 计算右雅可比的逆
  * @param xyz so3
  * @return Jr^-1
+ * 公式(1.7)
  */
 Eigen::Matrix3f InverseRightJacobianSO3(const float &x, const float &y, const float &z)
 {
@@ -124,7 +126,7 @@ Eigen::Matrix3f InverseRightJacobianSO3(const Eigen::Vector3f &v)
  */
 IntegratedRotation::IntegratedRotation(const Eigen::Vector3f &angVel, const Bias &imuBias, const float &time)
 {
-    // 得到考虑偏置后的角度旋转
+    // 得到考虑偏置后的角度旋转 公式(5.1)，不算EXP
     const float x = (angVel(0) - imuBias.bwx) * time;
     const float y = (angVel(1) - imuBias.bwy) * time;
     const float z = (angVel(2) - imuBias.bwz) * time;
@@ -136,7 +138,9 @@ IntegratedRotation::IntegratedRotation(const Eigen::Vector3f &angVel, const Bias
     Eigen::Vector3f v;
     v << x, y, z;
 
-    // 角度转成叉积的矩阵形式
+    // 角度转成叉积的矩阵形式 
+    // deltaR 算的是 EXP(角度) 公式（5.1）
+    // rightJ 算得是 讲义15页最下面
     Eigen::Matrix3f W = Sophus::SO3f::hat(v);
     // eps = 1e-4 是一个小量，根据罗德里格斯公式求极限，后面的高阶小量忽略掉得到此式
     if (d < eps)
@@ -145,7 +149,7 @@ IntegratedRotation::IntegratedRotation(const Eigen::Vector3f &angVel, const Bias
         rightJ = Eigen::Matrix3f::Identity();
     }
     else
-    {
+    {   
         deltaR = Eigen::Matrix3f::Identity() + W * sin(d) / d + W * W * (1.0f - cos(d)) / d2;
         rightJ = Eigen::Matrix3f::Identity() - W * (1.0f - cos(d)) / d2 + W * W * (d - sin(d)) / (d2 * d);
     }
@@ -165,7 +169,7 @@ Preintegrated::Preintegrated(const Bias &b_, const Calib &calib)
     Initialize(b_);
 }
 
-// Copy constructor
+// Copy constructor 根据其他的预积分 赋值 当前的预积分
 Preintegrated::Preintegrated(Preintegrated *pImuPre) 
     : dT(pImuPre->dT), C(pImuPre->C), Info(pImuPre->Info),
     Nga(pImuPre->Nga), NgaWalk(pImuPre->NgaWalk), b(pImuPre->b), dR(pImuPre->dR), dV(pImuPre->dV),
@@ -203,7 +207,7 @@ void Preintegrated::CopyFrom(Preintegrated *pImuPre)
 }
 
 /** 
- * @brief 初始化预积分
+ * @brief 初始化预积分，矩阵弄一个初始值
  * @param b_ 偏置
  */
 void Preintegrated::Initialize(const Bias &b_)
@@ -274,12 +278,12 @@ void Preintegrated::IntegrateNewMeasurement(const Eigen::Vector3f &acceleration,
     avgW = (dT * avgW + accW * dt) / (dT + dt);
 
     // Update delta position dP and velocity dV (rely on no-updated delta rotation)
-    // 根据没有更新的dR来更新dP与dV  eq.(38)
+    // 根据没有更新的dR来更新dP与dV  （5.2） （5.3） 更新的时候，更新顺序为：dP - dV -dR，因为要用上一时刻的老数据
     dP = dP + dV * dt + 0.5f * dR * acc * dt * dt;
-    dV = dV + dR * acc * dt;
+    dV = dV + dR * acc * dt; 
 
     // Compute velocity and position parts of matrices A and B (rely on non-updated delta rotation)
-    // 根据η_ij = A * η_i,j-1 + B_j-1 * η_j-1中的Ａ矩阵和Ｂ矩阵对速度和位移进行更新
+    // 根据η_ij = A * η_i,j-1 + B_j-1 * η_j-1中的Ａ矩阵和Ｂ矩阵对速度和位移进行更新   P15页最上面
     Eigen::Matrix<float, 3, 3> Wacc = Sophus::SO3f::hat(acc);
 
     A.block<3, 3>(3, 0) = -dR * dt * Wacc;
@@ -291,6 +295,7 @@ void Preintegrated::IntegrateNewMeasurement(const Eigen::Vector3f &acceleration,
     // Update position and velocity jacobians wrt bias correction
     // 因为随着时间推移，不可能每次都重新计算雅克比矩阵，所以需要做J(k+1) = j(k) + (~)这类事，分解方式与AB矩阵相同
     // 论文作者对forster论文公式的基础上做了变形，然后递归更新，参见 https://github.com/UZ-SLAMLab/ORB_SLAM3/issues/212
+    // P18页上面
     JPa = JPa + JVa * dt - 0.5f * dR * dt * dt;
     JPg = JPg + JVg * dt - 0.5f * dR * dt * dt * Wacc * JRg;
     JVa = JVa - dR * dt;
@@ -299,11 +304,11 @@ void Preintegrated::IntegrateNewMeasurement(const Eigen::Vector3f &acceleration,
     // Update delta rotation
     // Step 2. 构造函数，会根据更新后的bias进行角度积分
     IntegratedRotation dRi(angVel, b, dt);
-    // 强行归一化使其符合旋转矩阵的格式
+    // 强行归一化使其符合旋转矩阵的格式 
     dR = NormalizeRotation(dR * dRi.deltaR);
 
     // Compute rotation parts of matrices A and B
-    // 补充AB矩阵
+    // 补充AB矩阵 
     A.block<3, 3>(0, 0) = dRi.deltaR.transpose();
     B.block<3, 3>(0, 0) = dRi.rightJ * dt;
 

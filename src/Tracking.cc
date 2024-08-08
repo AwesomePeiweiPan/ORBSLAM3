@@ -2006,7 +2006,7 @@ void Tracking::ResetFrameIMU()
  */
 void Tracking::Track()
 {
-
+    // 步进模式，允许每一步操作之间暂停和检查SLAM状态
     if (bStepByStep)
     {
         std::cout << "Tracking: Waiting to the next step" << std::endl;
