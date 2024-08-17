@@ -1917,7 +1917,7 @@ void Tracking::PreintegrateIMU()
 }
 
 /**
- * @brief 跟踪不成功的时候，用初始化好的imu数据做跟踪处理，通过IMU预测状态
+ * @brief 跟踪不成功的时候，用初始化好的imu数据做跟踪处理，通过IMU预测状态,普通预积分
  * 两个地方用到：
  * 1. 匀速模型计算速度,但并没有给当前帧位姿赋值；
  * 2. 跟踪丢失时不直接判定丢失，通过这个函数预测当前帧位姿看看能不能拽回来，代替纯视觉中的重定位
@@ -1925,7 +1925,7 @@ void Tracking::PreintegrateIMU()
  * @return true 
  * @return false 
  */
-bool Tracking::PredictStateIMU()
+bool Tracking::PredictStateIMU()  
 {
     if(!mCurrentFrame.mpPrevFrame)
     {

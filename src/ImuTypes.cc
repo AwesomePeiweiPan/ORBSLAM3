@@ -50,7 +50,7 @@ Eigen::Matrix3f NormalizeRotation(const Eigen::Matrix3f &R)
  * @brief 计算右雅可比
  * @param xyz 李代数
  * @return Jr
- * 公式 (1.6)
+ * cv公式 (1.6)
  */
 Eigen::Matrix3f RightJacobianSO3(const float &x, const float &y, const float &z)
 {
@@ -85,7 +85,7 @@ Eigen::Matrix3f RightJacobianSO3(const Eigen::Vector3f &v)
  * @brief 计算右雅可比的逆
  * @param xyz so3
  * @return Jr^-1
- * 公式(1.7)
+ * cv公式(1.7)
  */
 Eigen::Matrix3f InverseRightJacobianSO3(const float &x, const float &y, const float &z)
 {
@@ -126,7 +126,7 @@ Eigen::Matrix3f InverseRightJacobianSO3(const Eigen::Vector3f &v)
  */
 IntegratedRotation::IntegratedRotation(const Eigen::Vector3f &angVel, const Bias &imuBias, const float &time)
 {
-    // 得到考虑偏置后的角度旋转 公式(5.1)，不算EXP
+    // 得到考虑偏置后的角度旋转 cv公式(5.1)，不算EXP
     const float x = (angVel(0) - imuBias.bwx) * time;
     const float y = (angVel(1) - imuBias.bwy) * time;
     const float z = (angVel(2) - imuBias.bwz) * time;
@@ -139,8 +139,8 @@ IntegratedRotation::IntegratedRotation(const Eigen::Vector3f &angVel, const Bias
     v << x, y, z;
 
     // 角度转成叉积的矩阵形式 
-    // deltaR 算的是 EXP(角度) 公式（5.1）
-    // rightJ 算得是 讲义15页最下面
+    // deltaR 算的是 EXP(角度) cv公式（5.1）
+    // rightJ 算得是 cv15页最下面
     Eigen::Matrix3f W = Sophus::SO3f::hat(v);
     // eps = 1e-4 是一个小量，根据罗德里格斯公式求极限，后面的高阶小量忽略掉得到此式
     if (d < eps)
@@ -244,7 +244,7 @@ void Preintegrated::Reintegrate()
 }
 
 /**
- * @brief 预积分计算，更新noise
+ * @brief ！！！！！很重要。预积分计算，更新noise
  * 
  * @param[in] acceleration  加速度计数据
  * @param[in] angVel        陀螺仪数据
@@ -331,7 +331,7 @@ void Preintegrated::IntegrateNewMeasurement(const Eigen::Vector3f &acceleration,
 }
 
 /** 
- * @brief 融合两个预积分，发生在删除关键帧的时候，3帧变2帧，需要把两段预积分融合
+ * @brief 融合两个预积分，发生在删除关键帧的时候，3帧变2帧，需要把两段预积分融合，融合协方差，协方差不能简单融合
  * @param pPrev 前面的预积分
  */
 void Preintegrated::MergePrevious(Preintegrated *pPrev)
@@ -388,7 +388,7 @@ IMU::Bias Preintegrated::GetDeltaBias(const Bias &b_)
 }
 
 /** 
- * @brief 根据新的偏置计算新的dR
+ * @brief 根据新的偏置计算新的dR  (4.32)
  * @param b_ 新的偏置
  * @return dR
  */
